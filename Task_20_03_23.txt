@@ -1,0 +1,99 @@
+import bcrypt
+import mysql.connector
+import re
+
+phone_number=input("Enter a phone number :  ")
+email=input("Enter a email        :  ")
+username=input("Enter a username     :  ")
+firstname=input("Enter a firstname    :  ")
+middlename=input("Enter a middlename   :  ")
+lastname=input("Enter a lastname     :  ")
+password=input("Enter a password     :  ").encode('utf-8')
+countrycode=input("Enter a countrycode  :  ")
+
+password_hash=b"password"
+salt = bcrypt.gensalt()
+hashed_password = bcrypt.hashpw(password_hash, salt)
+
+def is_valid_number(phone_number):
+    pattern1 = re.compile(r'^\+?91[\-\s][6-9]\d{9}$')
+    pattern2 = re.compile(r'^\+?91[6-9]\d{9}$')
+    pattern3 = re.compile(r'^[6-9]\d{9}$')   
+    if pattern1.match(phone_number):    
+        return True
+        
+    elif pattern2.match(phone_number):
+        return True
+    elif pattern3.match(phone_number):
+        return True
+    else:
+        return False
+phone=is_valid_number(phone_number)
+
+    
+
+
+def check(email):
+    pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
+    if(re.fullmatch(pattern, email)):
+        return True
+    else:
+        return False
+useremail=check(email)
+
+    
+
+
+
+# establish database connection
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="root",
+    database="login"
+)
+
+
+    
+mycursor = db.cursor()
+def enterdetails():
+    if(phone):
+        if(useremail):
+            sql ="insert into users (username,firstname, middlename, lastname, password, mobilenumber, countrycode, email)VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            val = (username,firstname,middlename,lastname,hashed_password,phone_number,countrycode,email)
+            mycursor.execute(sql, val)
+            db.commit()
+            print(mycursor.rowcount, "record inserted.")
+            login()
+        else:
+            print("Incorrect email - ",email," ,please enter valid email ",)
+            
+    else:
+        print("Incorrect phone number - ",phone_number, " ,please enter valid phone number")
+        
+    
+def login():
+    print("----------------------------")
+    print(" ")
+    print("Please enter username and password to login")
+    select_query = "SELECT * FROM users WHERE username=%s AND password=%s"
+    username = input("Enter your username : ")
+    password = input("Enter your password : ").encode('utf-8')
+    
+
+    mycursor.execute(select_query, (username,password))
+    x=mycursor.fetchall()
+    
+    password_to_check = b"password"
+    e=bcrypt.checkpw(password_to_check, hashed_password)
+    if(e):
+        print("Password is correct!")
+    else:
+        print("Password is incorrect.")
+       
+
+       
+
+enterdetails()       
+db.close()
+
